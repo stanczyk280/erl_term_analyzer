@@ -3,7 +3,7 @@
 -export([init/0]).
 -on_load(init/0).
 
--export([echo/1, analyze_term/1]).
+-export([echo/1, analyze_term/1, print_term_info/1]).
 
 -define(APPLICATION, erl_term_analyzer).
 -define(NIF_SO_FILE, "erl_term_analyzer").
@@ -18,3 +18,22 @@ echo(_Term) ->
 
 analyze_term(_Term) ->
   ?NIF_NOT_LOADED.
+
+print_term_info(Term) ->
+  Map = analyze_term(Term),
+  print_term_map(Map).
+
+
+print_term_map(Map) ->
+  Binary = maps:get(binary, Map),
+  Tag = maps:get(tag, Map),
+  Type = maps:get(type, Map),
+  Value = maps:get(value, Map),
+  NextTerm = maps:find(next_term, Map),
+  io:format("Binary: ~p~nTag: ~p~nType: ~p~nValue: ~p~n", [Binary ,Tag, Type, Value]),
+  case NextTerm of
+    {ok, NextMap} -> 
+      io:format("Next term: ~n"),
+      print_term_map(NextMap);
+    error -> ok
+  end.

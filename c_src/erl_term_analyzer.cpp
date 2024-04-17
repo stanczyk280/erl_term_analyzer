@@ -4,6 +4,7 @@
 
 typedef struct TermInfo
 {
+    char* binary;
     char* tag;
     char* type;
     uint64_t value;
@@ -76,6 +77,10 @@ static ERL_NIF_TERM term_info_to_map(ErlNifEnv* env, TermInfo* term_info)
 
     ERL_NIF_TERM key, value;
 
+    key = enif_make_atom(env, "binary");
+    value = enif_make_string(env, term_info->binary, ERL_NIF_LATIN1);
+    enif_make_map_put(env, map, key, value, &map);
+
     key = enif_make_atom(env, "tag");
     value = enif_make_string(env, term_info->tag, ERL_NIF_LATIN1);
     enif_make_map_put(env, map, key, value, &map);
@@ -106,9 +111,23 @@ static ERL_NIF_TERM analyze_term(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
     return term_info_to_map(env, term_info);
 }
 
+char* get_binary_representation(uint64_t term_64)
+{
+    char* binary = (char*) malloc(65 * sizeof(char));
+
+    for(int i = 63; i >= 0; i--) {
+        binary[63 - i] = ((term_64 >> i) & 1) ? '1' : '0';
+    }
+    binary[64] = '\0';
+
+    return binary;
+}
+
 TermInfo* analyze_tag(uint64_t term_64)
 {
     TermInfo* term_info;
+
+    char* binary = get_binary_representation(term_64);
 
     switch(term_64 & _TAG_PRIMARY_MASK)
     {
@@ -129,7 +148,7 @@ TermInfo* analyze_tag(uint64_t term_64)
             term_info = NULL;
             break;
     }
-
+    term_info -> binary = binary;
     return term_info;
 }
 
@@ -140,10 +159,12 @@ TermInfo* analyze_list(uint64_t term_64)
     char* tag;
     tag = "LIST";
 
+    char* binary = get_binary_representation(term_64);
     uint64_t list_ptr_value;
     list_ptr_value = term_64 & ~ _TAG_PRIMARY_MASK;
     uint64_t* list_ptr;
     list_ptr = (uint64_t *)list_ptr_value;
+    term_info -> binary = binary;
     term_info -> tag = tag;
     term_info -> type = NULL;
     term_info -> value = list_ptr_value;
@@ -159,11 +180,13 @@ TermInfo* analyze_boxed(uint64_t term_64)
     char* tag;
     tag = "BOXED";
 
+    char* binary = get_binary_representation(term_64);
     uint64_t boxed_ptr_value;
     boxed_ptr_value = term_64 & ~_TAG_PRIMARY_MASK;
     uint64_t* boxed_ptr;
     boxed_ptr = (uint64_t *)boxed_ptr_value;
 
+    term_info -> binary = binary;
     term_info -> tag = tag;
     term_info -> type = NULL;
     term_info -> value = boxed_ptr_value;
@@ -179,6 +202,7 @@ TermInfo* analyze_header(uint64_t term_64)
 
     char* tag;
     tag = "HEADER";
+    char* binary = get_binary_representation(term_64);
 
     switch (header)
     {
@@ -268,6 +292,7 @@ TermInfo* analyze_header(uint64_t term_64)
         break;
     }
 
+    term_info -> binary = binary;
     return term_info;
 }
 
@@ -280,6 +305,7 @@ TermInfo* analyze_immed1(uint64_t term_64)
 
     TermInfo* term_info = (TermInfo*)malloc(sizeof(TermInfo));
 
+    char* binary = get_binary_representation(term_64);
     tag = "IMMED1";
 
     switch(immed1_term)
@@ -317,6 +343,8 @@ TermInfo* analyze_immed1(uint64_t term_64)
     
     }
 
+    term_info -> binary = binary;
+
     return term_info;
 }
 
@@ -328,6 +356,8 @@ TermInfo* analyze_immed2(uint64_t term_64)
     TermInfo* term_info = (TermInfo*)malloc(sizeof(TermInfo));
     char* tag;
     tag = "IMMED2";
+    char* binary = get_binary_representation(term_64);
+
     switch (immed2_term)
     {
         case _TAG_IMMED2_ATOM:
@@ -353,6 +383,8 @@ TermInfo* analyze_immed2(uint64_t term_64)
             break;
     }
 
+    term_info -> binary = binary;
+    
     return term_info;
 }
 
@@ -380,6 +412,7 @@ void print_binary(uint64_t num, uint64_t mask) {
 }
 
 void print_term_info(TermInfo* info) {
+    printf("BINARY: %s\n", info->binary);
     printf("TAG: %s\n", info->tag);
     printf("TYPE: %s\n", info->type);
     printf("VALUE: %lu\n", info->value);
