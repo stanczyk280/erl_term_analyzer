@@ -1,0 +1,9 @@
+{application,erl_term_analyzer,
+             [{description,"An OTP library"},
+              {vsn,"0.1.0"},
+              {registered,[]},
+              {applications,[kernel,stdlib]},
+              {env,[]},
+              {modules,[erl_term_analyzer]},
+              {licenses,["Apache-2.0"]},
+              {links,[]}]}.
