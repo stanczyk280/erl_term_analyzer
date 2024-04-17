@@ -22,7 +22,6 @@ void analyze_boxed(uint64_t term_64);
 void analyze_header(uint64_t term_64);
 
 static ErlNifFunc nif_funcs[] = {
-    {"noop", 0, noop},
     {"echo", 1, echo},
     {"analyze_term", 1, analyze_term}
 };
@@ -56,11 +55,6 @@ static int upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_N
     return 0;
 }
 
-
-static ERL_NIF_TERM noop(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    return atom_ok;
-}
 
 static ERL_NIF_TERM echo(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {

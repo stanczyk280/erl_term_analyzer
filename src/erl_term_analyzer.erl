@@ -3,7 +3,7 @@
 -export([init/0]).
 -on_load(init/0).
 
--export([noop/0, echo/1, analyze_term/1]).
+-export([echo/1, analyze_term/1]).
 
 -define(APPLICATION, erl_term_analyzer).
 -define(NIF_SO_FILE, "erl_term_analyzer").
@@ -12,9 +12,6 @@
 
 init() ->
   ok = erlang:load_nif(filename:join(code:priv_dir(?APPLICATION), ?NIF_SO_FILE), []).
-
-noop() ->
-  ?NIF_NOT_LOADED.
 
 echo(_Term) ->
   ?NIF_NOT_LOADED.
