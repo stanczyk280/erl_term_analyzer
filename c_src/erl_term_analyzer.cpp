@@ -29,6 +29,8 @@ TermInfo* analyze_immed1(uint64_t term_64);
 TermInfo* analyze_immed2(uint64_t term_64);
 TermInfo* analyze_tag(uint64_t term_64);
 void analyze_list(uint64_t term_64);
+TermInfo* analyze_header(uint64_t term_64);
+TermInfo* analyze_boxed(uint64_t term_64);
 
 void print_binary(uint64_t term_64, uint64_t mask);
 void print_term_info(TermInfo* info);
@@ -108,7 +110,6 @@ static ERL_NIF_TERM analyze_term(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
 {
     uint64_t term_64;
     term_64 = uint64_t(argv[0]);
-    TermInfo* term_info;
     analyze_tag(term_64);
 
     return atom_ok;
@@ -117,31 +118,18 @@ static ERL_NIF_TERM analyze_term(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
 TermInfo* analyze_tag(uint64_t term_64)
 {
     TermInfo* term_info = (TermInfo*)malloc(sizeof(TermInfo));
-    char* binary = get_binary_representation(term_64);
     uint64_t tag = term_64 & _TAG_PRIMARY_MASK;
 
     switch(tag)
     {
         case TAG_PRIMARY_HEADER:
-            term_info -> binary = binary;
-            term_info -> tag = (char*)"HEADER";
-            term_info -> type = (char*)"HEADER";
-            term_info -> value = term_64;
-            term_info -> head = NULL;
-            term_info -> tail = NULL;
-            print_term_info(term_info);
+            term_info = analyze_header(term_64);
             break;
         case TAG_PRIMARY_LIST:
             analyze_list(term_64);
             break;
         case TAG_PRIMARY_BOXED:
-            term_info -> binary = binary;
-            term_info -> tag = (char*)"BOXED";
-            term_info -> type = (char*)"BOXED";
-            term_info -> value = term_64;
-            term_info -> head = NULL;
-            term_info -> tail = NULL;
-            print_term_info(term_info);
+            term_info = analyze_boxed(term_64);
             break;
         case TAG_PRIMARY_IMMED1:
             term_info = analyze_immed1(term_64);
@@ -239,6 +227,7 @@ TermInfo* analyze_tail(uint64_t term_64)
     term_info -> value = value;
     term_info -> head = NULL;
     term_info -> tail = NULL;
+    print_term_info(term_info);
 
     return term_info;
 }
@@ -266,27 +255,180 @@ void analyze_list(uint64_t term_64)
             break;
         }
         
-        term_info->head = analyze_tag(*head_ptr);
         term_info->tail = analyze_tail(*tail_ptr);
-
+        term_info->head = analyze_tag(*head_ptr);
+        
         printf("\r\n====================\r\n");
-        print_term_info(term_info);
         head_ptr = (uint64_t *)term_info->tail->value;
         tail_ptr = head_ptr + 1;
+
         if ((*tail_ptr & _TAG_IMMED2_MASK) == _TAG_IMMED2_NIL) 
         {
-            printf("\r\n====================\r\n");
+            
+            analyze_tag(*tail_ptr);
             term_info->head = analyze_tag(*head_ptr);
-            print_term_info(term_info);
-
             printf("\r\n====================\r\n");
-            print_term_info(analyze_tag(*tail_ptr));
             printf("END OF LIST\r\n");
             break;
         }
         
     }
 }
+
+TermInfo* analyze_header(uint64_t term_64)
+{
+    uint64_t header = term_64 & _TAG_HEADER_MASK;
+    TermInfo* term_info = (TermInfo*)malloc(sizeof(TermInfo));
+
+    char* tag;
+    tag = (char*)"HEADER";
+    char* binary = get_binary_representation(term_64);
+    term_info -> binary = binary;
+
+    switch (header)
+    {
+    case _TAG_HEADER_ARITYVAL:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"ARITYVAL";
+        term_info -> value = term_64 >> _HEADER_ARITY_OFFS;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_FUN_REF:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"FUN_REF";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_FUN:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"FUN";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_POS_BIG:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"POS_BIG";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_NEG_BIG:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"NEG_BIG";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_FLOAT:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"FLOAT";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_REF:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"REF";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_BIN_REF:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"BIN_REF";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_HEAP_BITS:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"HEAP_BITS";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_SUB_BITS:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"SUB_BITS";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_EXTERNAL_PID:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"EXTERNAL_PID";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        //print_term_info(term_info);
+        break;
+    case _TAG_HEADER_EXTERNAL_PORT: 
+        term_info -> tag = tag;
+        term_info -> type = (char*)"EXTERNAL_PORT";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        print_term_info(term_info);
+        break;
+    case _TAG_HEADER_EXTERNAL_REF:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"EXTERNAL_REF";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        print_term_info(term_info);
+        break;
+    case _TAG_HEADER_MAP:
+        term_info -> tag = tag;
+        term_info -> type = (char*)"MAP";
+        term_info -> value = 0;
+        term_info -> head = NULL;
+        term_info -> tail = NULL;
+        print_term_info(term_info);
+        break;
+    }
+
+    
+    return term_info;
+}
+
+TermInfo* analyze_boxed(uint64_t term_64) 
+{
+    TermInfo* term_info = (TermInfo*)malloc(sizeof(TermInfo));
+
+    char* tag;
+    tag = (char*)"BOXED";
+
+    char* binary = get_binary_representation(term_64);
+    uint64_t boxed_ptr_value;
+    boxed_ptr_value = term_64 & ~_TAG_PRIMARY_MASK;
+    uint64_t* boxed_ptr;
+    boxed_ptr = (uint64_t *)boxed_ptr_value;
+
+    term_info -> binary = binary;
+    term_info -> tag = tag;
+    term_info -> type = NULL;
+    term_info -> value = boxed_ptr_value;
+    term_info -> head = analyze_tag(*boxed_ptr);
+    term_info -> tail = NULL;
+    print_term_info(term_info);
+
+    return term_info;
+}
+
 
 char* get_binary_representation(uint64_t term_64)
 {
