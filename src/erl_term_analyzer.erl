@@ -3,7 +3,7 @@
 -export([init/0]).
 -on_load(init/0).
 
--export([echo/1, analyze_term/1, print_term_info/1]).
+-export([echo/1, analyze_term/1, print_term_info/1, test/0]).
 
 -define(APPLICATION, erl_term_analyzer).
 -define(NIF_SO_FILE, "erl_term_analyzer").
@@ -22,6 +22,9 @@ analyze_term(_Term) ->
 print_term_info(Term) ->
   Map = analyze_term(Term),
   print_term_map(Map).
+
+test() ->
+  analyze_term("test").
 
 
 print_term_map(Map) ->
