@@ -275,6 +275,30 @@ void analyze_list(uint64_t term_64)
     }
 }
 
+TermInfo* analyze_boxed(uint64_t term_64) 
+{
+    TermInfo* term_info = (TermInfo*)malloc(sizeof(TermInfo));
+
+    char* tag;
+    tag = (char*)"BOXED";
+
+    char* binary = get_binary_representation(term_64);
+    uint64_t boxed_ptr_value;
+    boxed_ptr_value = term_64 & ~_TAG_PRIMARY_MASK;
+    uint64_t* boxed_ptr;
+    boxed_ptr = (uint64_t *)boxed_ptr_value;
+
+    term_info -> binary = binary;
+    term_info -> tag = tag;
+    term_info -> type = NULL;
+    term_info -> value = boxed_ptr_value;
+    term_info -> head = analyze_tag(*boxed_ptr);
+    term_info -> tail = NULL;
+    print_term_info(term_info);
+
+    return term_info;
+}
+
 TermInfo* analyze_header(uint64_t term_64)
 {
     uint64_t header = term_64 & _TAG_HEADER_MASK;
@@ -381,7 +405,7 @@ TermInfo* analyze_header(uint64_t term_64)
         term_info -> value = 0;
         term_info -> head = NULL;
         term_info -> tail = NULL;
-        print_term_info(term_info);
+        //print_term_info(term_info);
         break;
     case _TAG_HEADER_EXTERNAL_REF:
         term_info -> tag = tag;
@@ -389,7 +413,7 @@ TermInfo* analyze_header(uint64_t term_64)
         term_info -> value = 0;
         term_info -> head = NULL;
         term_info -> tail = NULL;
-        print_term_info(term_info);
+        //print_term_info(term_info);
         break;
     case _TAG_HEADER_MAP:
         term_info -> tag = tag;
@@ -397,38 +421,13 @@ TermInfo* analyze_header(uint64_t term_64)
         term_info -> value = 0;
         term_info -> head = NULL;
         term_info -> tail = NULL;
-        print_term_info(term_info);
+        //print_term_info(term_info);
         break;
     }
 
     
     return term_info;
 }
-
-TermInfo* analyze_boxed(uint64_t term_64) 
-{
-    TermInfo* term_info = (TermInfo*)malloc(sizeof(TermInfo));
-
-    char* tag;
-    tag = (char*)"BOXED";
-
-    char* binary = get_binary_representation(term_64);
-    uint64_t boxed_ptr_value;
-    boxed_ptr_value = term_64 & ~_TAG_PRIMARY_MASK;
-    uint64_t* boxed_ptr;
-    boxed_ptr = (uint64_t *)boxed_ptr_value;
-
-    term_info -> binary = binary;
-    term_info -> tag = tag;
-    term_info -> type = NULL;
-    term_info -> value = boxed_ptr_value;
-    term_info -> head = analyze_tag(*boxed_ptr);
-    term_info -> tail = NULL;
-    print_term_info(term_info);
-
-    return term_info;
-}
-
 
 char* get_binary_representation(uint64_t term_64)
 {
