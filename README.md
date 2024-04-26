@@ -1,4 +1,4 @@
-A NIF written i C++ for erlang for bit by bit analyzation of erlang terms
+An Erlang NIF written in C++ for bit by bit analyzation of erlang terms
 
 Example output when analayzing an "integer of value 100":
 ```
