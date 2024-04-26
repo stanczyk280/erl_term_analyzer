@@ -265,7 +265,7 @@ void analyze_list(uint64_t term_64)
         if ((*tail_ptr & _TAG_IMMED2_MASK) == _TAG_IMMED2_NIL) 
         {
             
-            analyze_tag(*tail_ptr);
+            analyze_tail(*tail_ptr);
             term_info->head = analyze_tag(*head_ptr);
             printf("\r\n====================\r\n");
             printf("END OF LIST\r\n");
